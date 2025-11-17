@@ -7,7 +7,7 @@
 // @match        *://ai.hybgzs.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @downloadURL	 https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%E5%85%AC%E7%9B%8A%E7%AB%99%E6%89%B9%E9%87%8Fcdk%E5%85%91%E6%8D%A2%E5%B7%A5%E5%85%B7.js
+// @downloadURL	 https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%E5%85%AC%E7%9B%8A%E7%AB%99%E6%89%B9%E9%87%8Fcdk%E5%85%91%E6%8D%A2%E5%B7%A5%E5%85%B7.user.js
 // ==/UserScript==
 
 (function () {
