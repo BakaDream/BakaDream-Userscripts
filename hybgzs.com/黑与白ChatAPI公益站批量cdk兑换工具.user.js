@@ -2,7 +2,7 @@
 // @name         黑与白ChatAPI公益站批量cdk兑换工具
 // @namespace    https://github.com/BakaDream/BakaDream-Userscripts
 // @author	     BakaDream
-// @version      1.0
+// @version      1.1
 // @description  黑与白chatAPI公益站批量兑换cdk
 // @match        *://ai.hybgzs.com/*
 // @grant        GM_xmlhttpRequest

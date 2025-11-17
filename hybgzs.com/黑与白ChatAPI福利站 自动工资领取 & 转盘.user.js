@@ -3,7 +3,7 @@
 // @description  黑与白chatAPI福利站批量完成每日cdk任务
 // @author	     BakaDream
 // @namespace    https://github.com/BakaDream/BakaDream-Userscripts
-// @version      1.0
+// @version      1.1
 // @match        *://cdk.hybgzs.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
