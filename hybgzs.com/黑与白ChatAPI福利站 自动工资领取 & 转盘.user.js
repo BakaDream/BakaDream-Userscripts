@@ -6,6 +6,7 @@
 // @version      1.0
 // @match        *://cdk.hybgzs.com/*
 // @grant        GM_addStyle
+// @grant        GM_xmlhttpRequest
 // @downloadURL  https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/黑与白ChatAPI福利站%20自动工资领取%20%26%20转盘.js
 // ==/UserScript==
 
