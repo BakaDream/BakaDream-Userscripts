@@ -3,10 +3,11 @@
 // @description  黑与白chatAPI福利站批量完成每日cdk任务
 // @author	     BakaDream
 // @namespace    https://github.com/BakaDream/BakaDream-Userscripts
-// @version      1.1
+// @version      1.2
 // @match        *://cdk.hybgzs.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
 // @downloadURL  https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/黑与白ChatAPI福利站%20自动工资领取%20%26%20转盘.user.js
 // ==/UserScript==
 
@@ -122,7 +123,6 @@
   let debugLogs = [];
   let allCdks = [];
 
-  const page_version = window.pageVersion || "vab03ed43";
   const headers = {
     'accept': '*/*',
     'content-type': 'application/json',
@@ -169,7 +169,7 @@
       const resp = await fetch('https://cdk.hybgzs.com/api/claim-wage.php', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ page_version })
+        body: JSON.stringify({ page_version : unsafeWindow.pageVersion })
       });
       const text = await resp.text();
       const data = safeJSON(text);
@@ -196,7 +196,7 @@
         const resp = await fetch('https://cdk.hybgzs.com/api/spin-wheel.php', {
           method: 'POST',
           headers,
-          body: JSON.stringify({ page_version })
+          body: JSON.stringify({ page_version : unsafeWindow.pageVersion })
         });
         const text = await resp.text();
         const data = safeJSON(text);
@@ -227,6 +227,7 @@
     refreshCdkUI();
 
     log("任务开始！", "success");
+    log(`当前pageVersion ${unsafeWindow.pageVersion} `);
     await claimWage();
 
     if (!running) return;
