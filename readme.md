@@ -1,4 +1,6 @@
-| 黑与白ChatAPI公益站批量cdk兑换工具      | [![安装脚本](https://img.shields.io/badge/安装脚本-Userscript-blue?style=for-the-badge&logo=greasyfork)](https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%E5%85%AC%E7%9B%8A%E7%AB%99%E6%89%B9%E9%87%8Fcdk%E5%85%91%E6%8D%A2%E5%B7%A5%E5%85%B7.user.js) |
-| :-------------------------------------- | ------------------------------------------------------------ |
-| 黑与白ChatAPI福利站 自动工资领取 & 转盘 | [![安装脚本](https://img.shields.io/badge/安装脚本-Userscript-blue?style=for-the-badge&logo=greasyfork)](https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/黑与白ChatAPI福利站%20自动工资领取%20%26%20转盘.user.js) |
 
+| 工具名称                                   | 安装脚本                                                                 |
+| :----------------------------------------- | :----------------------------------------------------------------------- |
+| 黑与白ChatAPI公益站批量cdk兑换工具          | [![安装脚本](https://img.shields.io/badge/安装脚本-Userscript-blue?style=for-the-badge&logo=greasyfork)](https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%E5%85%AC%E7%9B%8A%E7%AB%99%E6%89%B9%E9%87%8Fcdk%E5%85%91%E6%8D%A2%E5%B7%A5%E5%85%B7.user.js) |
+| 黑与白ChatAPI NEXT福利站 自动工资领取 & 转盘 | [![安装脚本](https://img.shields.io/badge/安装脚本-Userscript-blue?style=for-the-badge&logo=greasyfork)](https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%20next%E7%A6%8F%E5%88%A9%E7%AB%99%20%E6%AF%8F%E6%97%A5%E5%B7%A5%E8%B5%84%26%E8%BD%AC%E7%9B%98.user.js) |
+| 黑与白ChatAPI福利站 自动工资领取 & 转盘(已停用) | [![安装脚本](https://img.shields.io/badge/安装脚本-Userscript-blue?style=for-the-badge&logo=greasyfork)](https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/黑与白ChatAPI福利站%20自动工资领取%20%26%20转盘.user.js) |
