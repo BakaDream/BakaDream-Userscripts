@@ -9,6 +9,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @downloadURL  https://raw.githubusercontent.com/BakaDream/BakaDream-Userscripts/refs/heads/main/hybgzs.com/%E9%BB%91%E4%B8%8E%E7%99%BDChatAPI%20next%E7%A6%8F%E5%88%A9%E7%AB%99%20%E6%AF%8F%E6%97%A5%E5%B7%A5%E8%B5%84%26%E8%BD%AC%E7%9B%98.user.js
+// ==/UserScript==
 
 (function () {
     'use strict';
