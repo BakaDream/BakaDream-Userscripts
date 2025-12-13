@@ -118,6 +118,8 @@
     const SPINWHEEL_URL = BASE_URL + 'api/wheel';
     const CHECKIN_URL = BASE_URL + 'api/checkin';
     const SITE_KEY = '0x4AAAAAABviDoYkzB9uGu4N'; //Turnstile Site Key
+    const STATUS_URL = BASE_URL + 'api/cards/draw/status';
+    const DRAW_URL = BASE_URL + 'api/cards/draw';
 
     const headers = {
         'accept': '*/*',
@@ -261,12 +263,112 @@
         }
         log('转盘任务执行完毕', 'info');
     }
+  // 获取抽卡状态
+    async function getDrawStatus() {
+        log('正在获取抽卡状态...', 'info');
+        try {
+            const resp = await fetch(STATUS_URL, { headers });
+            const data = await resp.json();
+
+            if (data.success && data.limits) {
+                log(`状态获取成功。免费剩余: ${data.limits.freeRemaining} 次。`, 'success');
+                return data.limits;
+            } else {
+                log(`获取状态失败: ${data.error || '数据不完整'}`, 'error');
+                return null;
+            }
+        } catch (err) {
+            log(`获取状态请求异常：${err}`, 'error');
+            return null;
+        }
+    }
+
+    // 执行抽卡
+    async function executeDraw(type) {
+        if (!running) return { success: false, message: "任务已停止" };
+
+        const drawType = type === 10 ? "ten" : "single";
+        log(`开始执行 ${type} 连抽 (${drawType})...`, 'info');
+
+        try {
+            const resp = await fetch(DRAW_URL, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ type: drawType })
+            });
+
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                const totalCards = data.cards.length;
+                const legendaryCount = data.cards.filter(c => c.rarity === 'legendary').length;
+                const epicCount = data.cards.filter(c => c.rarity === 'epic').length;
+
+                let msg = `${type} 连抽成功！获得 ${totalCards} 张卡片。`;
+                if (legendaryCount > 0) msg += ` 👑 传说卡: ${legendaryCount} 张。`;
+                if (epicCount > 0) msg += ` 🌟 史诗卡: ${epicCount} 张。`;
+
+                log(msg, 'success');
+                return { success: true, count: type };
+            } else {
+                log(`抽卡失败: ${data.error || '未知错误'}`, 'warn');
+                return { success: false, message: data.error || '未知错误' };
+            }
+        } catch (err) {
+            log(`抽卡请求异常：${err}`, 'error');
+            return { success: false, message: err.toString() };
+        }
+    }
+
+    // 自动抽卡主逻辑
+    async function autoDrawFreeCards() {
+        let drawCount = 0;
+        let status = await getDrawStatus();
+
+        if (!status || status.freeRemaining === 0) {
+            log('免费抽卡次数为 0，跳过自动抽卡。', 'info');
+            return;
+        }
+
+        let remaining = status.freeRemaining;
+        log(`开始执行免费抽卡，剩余 ${remaining} 次...`, 'info');
+
+        // 1. 优先执行十连抽
+        while (running && remaining >= 10) {
+            const result = await executeDraw(10);
+            if (result.success) {
+                remaining -= 10;
+                drawCount += 10;
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 间隔2秒
+            } else {
+                log(`十连抽中断: ${result.message}`, 'error');
+                running = false; // 如果十连抽失败，则停止
+                break;
+            }
+        }
+
+        // 2. 执行剩余的单抽
+        while (running && remaining > 0) {
+            const result = await executeDraw(1);
+            if (result.success) {
+                remaining -= 1;
+                drawCount += 1;
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 间隔1秒
+            } else {
+                log(`单抽中断: ${result.message}`, 'error');
+                running = false; // 如果单抽失败，则停止
+                break;
+            }
+        }
+
+        log(`免费抽卡任务执行完毕！共计抽卡 ${drawCount} 次。`, 'success');
+    }
 
     // 验证通过后执行任务
     async function executeTasksAfterVerify(token) {
         if (!running) return;
         await dailyCheckin(token);
         if (running) await spinWheel();
+      if (running) await autoDrawFreeCards();
         log('所有任务执行完毕！', 'success');
         running = false;
         updateBtnState();
@@ -395,7 +497,7 @@
         </div>
       </div>
     `;
-    
+
         modal = backdrop;
 
         // 绑定事件
