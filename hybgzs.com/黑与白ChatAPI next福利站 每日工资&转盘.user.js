@@ -3,8 +3,8 @@
 // @description  黑与白chatAPI next福利站批量完成每日cdk任务
 // @author       BakaDream
 // @namespace    https://github.com/BakaDream/BakaDream-Userscripts
-// @version      1.2
-// @match        *://next-cdk.hybgzs.com/*
+// @version      1.3
+// @match        *://cdk.hybgzs.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
