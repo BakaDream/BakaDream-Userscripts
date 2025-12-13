@@ -3,7 +3,7 @@
 // @description  黑与白chatAPI next福利站批量完成每日cdk任务
 // @author       BakaDream
 // @namespace    https://github.com/BakaDream/BakaDream-Userscripts
-// @version      1.1
+// @version      1.2
 // @match        *://next-cdk.hybgzs.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
@@ -42,6 +42,7 @@
       box-shadow:0 8px 30px rgba(0,0,0,0.25);
       overflow:hidden;
       font-size:14px;
+      display: flex; flex-direction: column; /* 确保内容可滚动 */
     }
 
     .hy-header{
@@ -59,7 +60,7 @@
     .hy-body{ padding:14px 16px; }
 
     .hy-log-box {
-      max-height: 300px;
+      max-height: 200px; /* 调整高度以适应 Turnstile */
       overflow: auto;
       background: #fff;
       border: 1px solid #f0f0f0;
@@ -73,6 +74,16 @@
       word-break: break-word;
       font-family: Consolas, monospace;
       margin-bottom: 12px;
+    }
+
+    /* Turnstile 容器样式 */
+    #hy-turnstile-container {
+        min-height: 0px;
+        transition: all 0.3s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
     }
 
     .hy-log-info { color: #2563eb; }    /* 蓝色：信息 */
@@ -93,17 +104,20 @@
     }
     .hy-btn-start{ background:#2563eb; color:white; }
     .hy-btn-stop{ background:#dc2626; color:white; }
+    .hy-btn-disabled { background:#94a3b8; cursor: not-allowed; }
   `);
 
     /* ==================== 状态 & 配置 ==================== */
     let modal = null;
     let running = false;
     let debugLogs = [];
+    let turnstileWidgetId = null; // Turnstile 状态
 
     // API配置
     const BASE_URL = 'https://next-cdk.hybgzs.com/';
     const SPINWHEEL_URL = BASE_URL + 'api/wheel';
     const CHECKIN_URL = BASE_URL + 'api/checkin';
+    const SITE_KEY = '0x4AAAAAABviDoYkzB9uGu4N'; //Turnstile Site Key
 
     const headers = {
         'accept': '*/*',
@@ -113,7 +127,7 @@
         'cookie': document.cookie
     };
 
-    /* ==================== 日志函数（双输出：控制台+浮窗） ==================== */
+    /* ==================== 日志函数 ==================== */
     function log(msg, type = "info") {
         // 1. 控制台输出（带颜色）
         const consoleColors = {
@@ -133,28 +147,75 @@
         // 3. 浮窗UI更新
         if (modal) {
             const box = modal.querySelector('.hy-log-box');
-            const div = document.createElement("div");
-            div.textContent = finalMsg;
-            div.className = `hy-log-${type}`;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight; // 自动滚动到底部
+            if(box) {
+                const div = document.createElement("div");
+                div.textContent = finalMsg;
+                div.className = `hy-log-${type}`;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight; // 自动滚动到底部
+            }
         }
     }
 
-    /* ==================== 核心任务函数 ==================== */
+    /* ==================== 自动注入 Turnstile  ==================== */
+
+    // 检查并加载 Cloudflare 脚本
+    async function loadTurnstileLib() {
+        if (unsafeWindow.turnstile) return true;
+
+        log('正在加载 Cloudflare Turnstile 验证组件...', 'warn');
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+                // 脚本加载后，可能需要一点点时间初始化
+                setTimeout(() => {
+                    if(unsafeWindow.turnstile) {
+                        resolve(true);
+                    } else {
+                        log('脚本加载完成但对象未就绪，请重试', 'error');
+                        resolve(false);
+                    }
+                }, 1000);
+            };
+            script.onerror = () => {
+                log('无法连接 Cloudflare，请检查网络', 'error');
+                resolve(false);
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+
     // 每日签到
-    async function dailyCheckin() {
+    async function dailyCheckin(token) {
         log('开始执行每日签到...', 'info');
         try {
-            const resp = await fetch(CHECKIN_URL, { method: 'POST', headers });
+            const resp = await fetch(CHECKIN_URL, {
+                method: 'POST',
+                headers: headers,
+                // 签到请求体现在需要包含 turnstileToken
+                body: JSON.stringify({ turnstileToken: token })
+            });
 
-            if (!resp.ok) {
-                const text = await resp.text();
-                log(`签到失败，状态码 ${resp.status}，信息: ${text}`, 'error');
+            // 统一处理 API 返回，包括纯文本错误
+            const text = await resp.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch(e) {
+                // 如果不是 JSON，说明服务器报错了
+                log(`签到异常: ${text.slice(0, 50)}...`, 'error');
                 return;
             }
 
-            const data = await resp.json();
+            if (!resp.ok) {
+                log(`签到失败: ${data.error || '未知错误'}`, 'error');
+                return;
+            }
+
             if (data.success) {
                 log(`签到成功！${data.data.message}`, 'success');
                 log(`连续签到 ${data.data.consecutiveDays} 天，当前钱包余额：${data.data.walletBalance}`, 'info');
@@ -162,12 +223,12 @@
                 log(`签到失败：${data.error || '未知错误'}`, 'warn');
             }
         } catch (err) {
-            log(`签到请求异常：${err}`, 'error');
+                        log(`签到请求异常：${err}`, 'error');
         }
     }
 
     // 转盘任务
-    async function spinWheel() {
+     async function spinWheel() {
         log('开始执行转盘任务...', 'info');
         for (let i = 1; i <= 6; i++) {
             if (!running) {
@@ -201,29 +262,115 @@
         log('转盘任务执行完毕', 'info');
     }
 
-    /* ==================== 任务控制 ==================== */
-    async function runTasks() {
+    // 验证通过后执行任务
+    async function executeTasksAfterVerify(token) {
+        if (!running) return;
+        await dailyCheckin(token);
+        if (running) await spinWheel();
+        log('所有任务执行完毕！', 'success');
+        running = false;
+        updateBtnState();
+    }
+
+    // 渲染 Turnstile 验证码
+    async function renderTurnstile() {
+        const container = document.getElementById('hy-turnstile-container');
+        if (!container) return;
+
+        // 1. 确保环境就绪
+        const ready = await loadTurnstileLib();
+        if (!ready) {
+            log('错误：Cloudflare 环境加载失败，请刷新页面重试', 'error');
+            running = false;
+            updateBtnState();
+            return;
+        }
+
+        // 2. 清理旧的
+        if (turnstileWidgetId !== null) {
+            try { unsafeWindow.turnstile.remove(turnstileWidgetId); } catch(e) {}
+            turnstileWidgetId = null;
+        }
+
+        container.innerHTML = '';
+        container.style.minHeight = '65px';
+
+        log('环境就绪，请手动点击验证...', 'warn');
+
+        try {
+            turnstileWidgetId = unsafeWindow.turnstile.render(container, {
+                sitekey: SITE_KEY,
+                theme: 'light',
+                callback: async function(token) {
+                    log('✅ 验证通过！正在请求任务...', 'success');
+                    container.style.minHeight = '0px';
+                    container.innerHTML = ''; // 隐藏验证码
+                    await executeTasksAfterVerify(token);
+                },
+                'error-callback': function() {
+                    log('验证出错，请重试', 'error');
+                },
+                'expired-callback': function() {
+                    log('验证过期，请刷新重试', 'warn');
+                    running = false; // 验证过期，终止任务
+                    updateBtnState();
+                }
+            });
+        } catch (e) {
+            log('验证码渲染失败: ' + e.message, 'error');
+            running = false;
+            updateBtnState();
+        }
+    }
+
+
+    /* ==================== UI 交互  ==================== */
+    async function startTasks() {
         if (running) return;
         running = true;
+        updateBtnState();
 
         // 初始化日志框
         if (modal) {
             const box = modal.querySelector('.hy-log-box');
-            box.innerHTML = ''; // 清空历史日志
+            box.innerHTML = '';
             debugLogs = [];
         }
 
-        log('任务开始执行！', 'success');
-        await dailyCheckin();
-        if (running) await spinWheel(); // 若未停止，继续执行转盘
-        log('所有任务执行完毕！', 'success');
-
-        running = false;
+        log('任务开始执行，等待 Cloudflare 验证...', 'success');
+        // 启动任务的入口现在是渲染 Turnstile
+        renderTurnstile();
     }
 
     function stopTasks() {
         running = false;
         log('任务已手动停止！', 'warn');
+        // 尝试移除 Turnstile 验证码
+        if (turnstileWidgetId !== null) {
+            try { unsafeWindow.turnstile.remove(turnstileWidgetId); } catch(e) {}
+            turnstileWidgetId = null;
+            const container = document.getElementById('hy-turnstile-container');
+            if (container) {
+                container.innerHTML = '';
+                container.style.minHeight = '0px';
+            }
+        }
+        updateBtnState();
+    }
+
+    function updateBtnState() {
+        if(!modal) return;
+        const startBtn = modal.querySelector('.hy-btn-start');
+        const stopBtn = modal.querySelector('.hy-btn-stop');
+        if(running) {
+            startBtn.classList.add('hy-btn-disabled');
+            startBtn.textContent = "运行中...";
+            stopBtn.disabled = false;
+        } else {
+            startBtn.classList.remove('hy-btn-disabled');
+            startBtn.textContent = "开始任务";
+            stopBtn.disabled = true;
+        }
     }
 
     /* ==================== 浮窗UI构建 ==================== */
@@ -236,29 +383,31 @@
         backdrop.innerHTML = `
       <div class="hy-dialog">
         <div class="hy-header">
-          <div class="hy-title">任务控制台</div>
+          <div class="hy-title">任务控制台 </div>
           <button class="hy-close">&times;</button>
         </div>
         <div class="hy-body">
           <div class="hy-log-box"></div>
-        </div>
+          <div id="hy-turnstile-container"></div> </div>
         <div class="hy-footer">
           <button class="hy-btn-sm hy-btn-start">开始任务</button>
           <button class="hy-btn-sm hy-btn-stop">停止任务</button>
         </div>
       </div>
     `;
-
+    
         modal = backdrop;
 
         // 绑定事件
         backdrop.querySelector(".hy-close").onclick = () => {
+            stopTasks(); // 关闭对话框时应停止所有任务
             modal.remove();
             modal = null;
         };
-        backdrop.querySelector(".hy-btn-start").onclick = runTasks;
+        backdrop.querySelector(".hy-btn-start").onclick = startTasks;
         backdrop.querySelector(".hy-btn-stop").onclick = stopTasks;
 
+        updateBtnState(); // 初始化按钮状态
         return backdrop;
     }
 
