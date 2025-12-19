@@ -114,7 +114,7 @@
     let turnstileWidgetId = null; // Turnstile 状态
 
     // API配置
-    const BASE_URL = 'https://next-cdk.hybgzs.com/';
+    const BASE_URL = 'https://cdk.hybgzs.com/';
     const SPINWHEEL_URL = BASE_URL + 'api/wheel';
     const CHECKIN_URL = BASE_URL + 'api/checkin';
     const SITE_KEY = '0x4AAAAAABviDoYkzB9uGu4N'; //Turnstile Site Key
